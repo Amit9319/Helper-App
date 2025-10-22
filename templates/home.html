@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Number & Price Grid</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- html2pdf (bundles html2canvas + jsPDF) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <style>
+    :root {
+      --bg:#f8fafc;         /* slate-50 */
+      --card:#ffffff;       /* white */
+      --muted:#475569;      /* slate-600 */
+      --accent:#2563eb;     /* blue-600 */
+      --accent-2:#9333ea;   /* purple-600 */
+      --danger:#dc2626;     /* red-600 */
+      --border:#e2e8f0;     /* slate-200 */
+      --white:#ffffff;
+    }
+
+    * { box-sizing: border-box }
+
+    body {
+      margin: 0; 
+      padding: 24px; 
+      background: var(--bg); 
+      color: var(--muted);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      padding-top: 120px !important; /* space for fixed navbar */
+    }
+
+    /* === GRID LAYOUT === */
+    .layout {
+      display: grid;
+      grid-template-columns: 320px auto; /* two columns: left + right */
+      grid-template-rows: auto 1fr;      /* two rows: top row + bottom log row */
+      grid-template-areas:
+        "left right"
+        "log  log";
+      gap: 24px;
+    }
+
+    .left-panel { grid-area: left; }
+    .right-panel { grid-area: right; }
+    .log-panel { grid-area: log; }
+
+ 
+
+    /* === COMPONENTS === */
+    .card {
+      background: var(--card); 
+      border: 1px solid var(--border);
+      border-radius: 16px; 
+      padding: 16px; 
+      box-shadow: 0 8px 24px rgba(0,0,0,.25);
+    }
+
+    h2, h3 { margin: 0 0 12px 0; color: var(--white); font-weight: 700 }
+
+    label {
+      display: block; 
+      font-size: 12px; 
+      text-transform: uppercase; 
+      letter-spacing: .06em; 
+      margin: 10px 0 6px; 
+      color: #9ca3af;
+    }
+
+    input, select {
+      width: 100%; 
+      padding: 10px 12px; 
+      border-radius: 10px; 
+      border: 1px solid var(--border); 
+      background: #e8eaed; 
+      color: var(--black);
+      outline: none;
+    }
+
+    input:focus, select:focus { border-color: var(--accent) }
+
+    .btn {
+      display: inline-block; 
+      border: none; 
+      border-radius: 12px; 
+      padding: 10px 14px; 
+      font-weight: 700; 
+      cursor: pointer; 
+      color: var(--white);
+      background: var(--accent); 
+      margin-right: 8px; 
+      transition: transform .02s ease;
+    }
+
+    .btn:active { transform: scale(.98) }
+    .btn.secondary { background: #e5e7eb; color: #111827 }
+    .btn.success { background: var(--accent-2); color: #fff }
+    .btn.danger { background: var(--danger); color: #fff }
+    .btn.block { width: 100% }
+    .stack { display: flex; gap: 8px; flex-wrap: wrap }
+
+    /* === TABLE === */
+ 
+    table { 
+      border-collapse: collapse; 
+      width: 100%; 
+      min-width: 800px; 
+      background: #ffffff; 
+      color: #111827;
+    }
+
+    th, td { 
+      border: 1px solid #d1d5db; 
+      text-align: center; 
+      padding: 8px 10px; 
+      font-variant-numeric: tabular-nums; 
+    }
+
+    th { 
+      position: sticky; 
+      top: 0; 
+      background: #f3f4f6; 
+      color: #111827; 
+      z-index: 1; 
+    }
+
+    /* === NAVBAR === */
+    .navbar-fixed {
+      position: fixed !important;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      color: #1e40af;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 32px;
+      border-radius: 0 0 20px 20px;
+      box-shadow: 0 4px 10px rgba(30, 64, 175, 0.15);
+      z-index: 9999;
+      transition: all 0.3s ease;
+    }
+
+    .navbar-fixed:hover {
+      box-shadow: 0 6px 16px rgba(30, 64, 175, 0.25);
+    }
+
+    .logo {
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      color: #1e40af;
+      text-transform: uppercase;
+    }
+
+    .navbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .profile-circle {
+      width: 42px;
+      height: 42px;
+      background: #1e40af;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 3px 6px rgba(30, 64, 175, 0.25);
+    }
+
+    .profile-circle:hover {
+      background: #2563eb;
+      transform: scale(1.05);
+    }
+
+    .help-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: white; /* or your navbar background */
+  color: #1e3a8a; /* blue tone */
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.help-btn:hover {
+  background-color: #e0ebff;
+  transform: translateY(-2px);
+}
+
+.help-icon {
+  width: 22px;
+  height: 22px;
+}
+
+    .logout-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      border: 2px solid #1e40af;
+      color: #1e40af;
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: all 0.2s ease;
+    }
+
+    .logout-btn:hover {
+      background: #1e40af;
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 3px 6px rgba(30, 64, 175, 0.3);
+    }
+
+    .logo-link {
+  text-decoration: none;      /* removes underline */
+  color: inherit;             /* keep same color as logo text */
+  display: inline-block;      /* smoother hover transforms */
+}
+
+.logo {
+  margin: 0;
+  transition: all 0.2s ease;
+}
+
+.logo-link:hover .logo {
+  opacity: 0.9;
+  transform: scale(1.03);
+  text-decoration: none;      /* ensures underline never appears */
+}
+
+    .logout-icon { width: 18px; height: 18px; }
+
+    /* === OTHER STYLES === */
+    .num-cell { color: #2563eb; font-weight: 700; }
+    .price-cell { color: #374151; }
+    .price-empty { color: #9ca3af; }
+    .flash { animation: flashBg .9s ease }
+    td.highlit-row { background-color: rgb(230, 230, 154); transition: background-color 0.9s ease; }
+
+    @keyframes flashBg { 
+      from { background: #e0f2fe } 
+      to { background: transparent } 
+    }
+
+    td.highlight-row {
+      background: #7f1d1d !important;
+      color: #fff !important;
+      font-weight: 700;
+    }
+
+    .bar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; }
+    .total { font-size:18px; font-weight:800; color:var(--muted) }
+    .header-line { color:#9ca3af }
+
+    /* Print/PDF styles */
+    @media print {
+      body { background:#fff; color:#000 }
+      .card { box-shadow:none; border:1px solid #ddd }
+      .btn { display:none }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar-fixed">
+    <div class="navbar-left">
+      <a href="{{ url_for('home') }}" class="logo-link">
+        <h1 class="logo">HELPER</h1>
+      </a>
+    </div>
+  
+    <div class="navbar-right">
+      <!-- Help Button -->
+      <a href="{{ url_for('help_page') }}" class="help-btn" title="Help">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" 
+             fill="none" stroke="currentColor" stroke-width="2" 
+             stroke-linecap="round" stroke-linejoin="round" class="help-icon">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+          <line x1="10" y1="9" x2="8" y2="9"/>
+        </svg>
+      </a>
+  
+      <!-- Profile Circle -->
+      <div class="profile-circle" title="{{ username }}">
+        {{ username[0]|upper }}
+      </div>
+  
+      <!-- Logout Button -->
+      <a href="{{ url_for('logout') }}" class="logout-btn">
+        <span>Logout</span>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+             stroke-width="2" stroke="currentColor" class="logout-icon">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+        </svg>
+      </a>
+    </div>
+  </nav>
+  
+
+  <div class="layout">
+    <!-- LEFT PANEL -->
+    <div class="card left-panel">
+      <h3>Header</h3>
+      <label for="name">Name</label>
+      <input id="name" type="text" placeholder="Enter name" />
+      <label for="date">Date</label>
+      <input id="date" type="date" />
+      <label for="type">GHAR</label>
+      <select id="type">
+        <option>GALI</option><option>DESAWAR</option><option>GAZIABAD</option><option>FARIDABAD</option>
+      </select>
+      <label for="openNumber">Open Number (00–99)</label>
+      <input id="openNumber" type="number" min="0" max="99" placeholder="e.g., 27" />
+      <div class="stack" style="margin-top:10px">
+        <button class="btn danger" id="highlightBtn">Highlight</button>
+        <button class="btn secondary" id="downloadBtn">Download PDF</button>
+      </div>
+      <hr style="border-color:#1f2937; margin:16px 0" />
+      <h3>Add Price</h3>
+      <label for="numberInput">Number (00–99)</label>
+      <input id="numberInput" type="number" min="0" max="99" placeholder="e.g., 27" />
+      <label for="priceInput">Price</label>
+      <input id="priceInput" type="number" step="any" placeholder="e.g., 150 or 12.5" />
+      <div class="stack" style="margin-top:10px">
+        <button class="btn success" id="addBtn">Add</button>
+        <button class="btn secondary" id="undoBtn" title="Undo last add">Undo</button>
+        <button class="btn danger" id="resetBtn" title="Reset all prices to XX">Reset</button>
+      </div>
+      <hr style="border-color:#1f2937; margin:16px 0" />
+      <h3>Update From Message</h3>
+      <textarea id="messageInput" placeholder='"25":100.00; "49":50.00; "15":100.00'
+        style="width:100%; min-height:80px; padding:8px; border:1px solid #d1d5db; border-radius:8px; font-size:13px; font-family:monospace;"></textarea>
+      <div class="stack" style="margin-top:10px">
+        <button class="btn success" id="updateFromMessageBtn">Update Table</button>
+        <button class="btn secondary" id="undoMessageUpdateBtn">Undo Update</button>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="card right-panel" id="pdfContent">
+      <div class="bar">
+        <h2 style="color:#000">JANTRI</h2>
+        <div>
+          <div class="total">Grand Total: <span id="grandTotal">0.00</span></div>
+          <div class="total" style="color:#f59e0b;">Commission: <span id="commission">0.00</span></div>
+        </div>
+      </div>
+      <div id="headerDetails" class="header-line" style="margin-bottom:10px"></div>
+
+      <div class="table-wrap">
+        <table id="dataTable">
+          <thead>
+            <tr>
+              <th>Number</th><th>Price</th>
+              <th>Number</th><th>Price</th>
+              <th>Number</th><th>Price</th>
+              <th>Number</th><th>Price</th>
+              <th>Number</th><th>Price</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+
+        <div id="totalsBox" 
+          style="margin:20px 16px; padding:16px; border:1px solid #e5e7eb; 
+                 border-radius:12px; background:#f9fafb; 
+                 display:flex; justify-content:space-between; gap:20px; 
+                 flex-wrap:wrap; align-items:center;
+                 box-shadow:0 4px 10px rgba(0,0,0,0.08);">
+          <div style="flex:1; min-width:200px;">
+            <div style="font-size:14px; color:#6b7280; text-transform:uppercase; letter-spacing:.05em;">
+              Open Number Price
+            </div>
+            <div id="openPrice" style="font-size:20px; font-weight:800; color:#2563eb; margin-top:4px;">
+              0.00
+            </div>
+          </div>
+
+          <div style="flex:1; min-width:200px;">
+            <div style="font-size:14px; color:#6b7280; text-transform:uppercase; letter-spacing:.05em;">
+              Final Total
+            </div>
+            <div id="finalTotal" style="font-size:22px; font-weight:900; margin-top:4px; color:#16a34a;">
+              0.00
+            </div>
+          </div>
+        </div>
+
+        <div id="textRepresentation" style="
+          flex-basis: 100%; 
+          margin-top: 20px; 
+          padding: 12px 16px;
+          font-size: 13px; 
+          line-height: 1.6;
+          font-family: 'Fira Code', 'Courier New', monospace;
+          color: #1f2937; 
+          background: #f9fafb;
+          border: 1px solid #e5e7eb; 
+          border-radius: 8px; 
+          box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+          white-space: pre-wrap; 
+          word-break: break-word;
+          overflow-y: auto;
+          max-height: 300px;">
+        </div>
+      </div>
+    </div>
+
+    <!-- LOG PANEL -->
+    <div class="card log-panel" id="logPanel">
+      <h3>Log</h3>
+      <div id="logList" style="
+        max-height:600px;
+        overflow-y:auto;
+        font-family:monospace;
+        font-size:13px;
+        line-height:1.5;
+        color:#1f2937;
+        background:#f9fafb;
+        border:1px solid #e5e7eb;
+        padding:10px;
+        border-radius:8px;">
+        <!-- Logs will appear here -->
+      </div>
+      <button class="btn danger block" id="clearLogBtn">Clear Log</button>
+    </div>
+  </div>
+
+  <script type="module" src="{{ url_for('static', filename='main.js') }}"></script>
+</body>
+</html>
