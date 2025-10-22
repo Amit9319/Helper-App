@@ -3,3 +3,4 @@ Flask-Login
 bcrypt
 pandas
 python-dateutil
+Gunicorn
